@@ -17,34 +17,12 @@ Traditional safety and location-sharing mobile applications suffer from two crit
 
 ---
 
-## Live Demo & Web Target Deployment
+## Live Demo
 
-### Testing the Web Tracking Page Locally
-The lightweight read-only web tracking page shell can be previewed locally at any time:
-```bash
-flutter build web
-# Serve locally using any local web server, e.g.:
-npx serve build/web
-```
-Or run directly in Chrome with hot reload:
-```bash
-flutter run -d chrome
-```
-Navigate to `http://localhost:<port>/#/track/demo-journey-id` to view the read-only live tracking map shell.
+**Public Web Live Tracking Link:**
+[https://rish-2006.github.io/SafeCircle/#/track/demo-journey-id](https://rish-2006.github.io/SafeCircle/#/track/demo-journey-id)
 
-### Deploying to Your Live Firebase Hosting Project
-To deploy the public web live-tracking link to your live Firebase project domain:
-```bash
-# 1. Build the production Flutter Web target
-flutter build web
-
-# 2. Login to your Firebase Console account
-npx firebase-tools login
-
-# 3. Deploy to Firebase Hosting
-npx firebase-tools deploy --only hosting --project YOUR_FIREBASE_PROJECT_ID
-```
-> *Once deployed, trusted contacts can view any active journey live without installing the app by opening `https://<YOUR-PROJECT-ID>.web.app/#/track/<JOURNEY-ID>`.*
+> *Trusted contacts can view a live journey without installing the app. Open the link above to test the read-only live web tracking page shell directly in any browser.*
 
 ---
 
