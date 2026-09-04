@@ -82,6 +82,10 @@ class NotificationService {
   }
 
   Future<void> subscribeToContactTopic(String contactId) async {
+    if (kIsWeb) {
+      debugPrint('FCM topic subscription skipped on web platform');
+      return;
+    }
     try {
       final topic = 'contact_$contactId';
       await _messaging.subscribeToTopic(topic);
@@ -92,6 +96,10 @@ class NotificationService {
   }
 
   Future<void> unsubscribeFromContactTopic(String contactId) async {
+    if (kIsWeb) {
+      debugPrint('FCM topic unsubscription skipped on web platform');
+      return;
+    }
     try {
       final topic = 'contact_$contactId';
       await _messaging.unsubscribeFromTopic(topic);
@@ -102,6 +110,7 @@ class NotificationService {
   }
 
   Future<void> syncContactSubscriptions(String userId, List<String> contactIds) async {
+    if (kIsWeb) return;
     await subscribeToContactTopic(userId);
     for (final cId in contactIds) {
       await subscribeToContactTopic(cId);

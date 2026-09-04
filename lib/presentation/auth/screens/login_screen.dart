@@ -88,8 +88,12 @@ class LoginScreen extends ConsumerWidget {
                 text: AppStrings.signInWithGoogle,
                 icon: Icons.g_mobiledata_outlined,
                 isLoading: authController.isLoading,
-                onPressed: () {
-                  ref.read(authControllerProvider.notifier).signInWithGoogle();
+                onPressed: () async {
+                  await ref.read(authControllerProvider.notifier).signInWithGoogle();
+                  final user = ref.read(authStateProvider).value;
+                  if (context.mounted && user != null) {
+                    context.go(user.isProfileComplete ? '/' : '/profile-setup');
+                  }
                 },
               ),
               const SizedBox(height: 14),
@@ -100,8 +104,12 @@ class LoginScreen extends ConsumerWidget {
                 variant: ButtonVariant.secondary,
                 icon: Icons.lock_open_outlined,
                 isLoading: authController.isLoading,
-                onPressed: () {
-                  ref.read(authControllerProvider.notifier).signInDemo();
+                onPressed: () async {
+                  await ref.read(authControllerProvider.notifier).signInDemo();
+                  final user = ref.read(authStateProvider).value;
+                  if (context.mounted && user != null) {
+                    context.go(user.isProfileComplete ? '/' : '/profile-setup');
+                  }
                 },
               ),
               const SizedBox(height: 40),

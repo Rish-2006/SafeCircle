@@ -82,38 +82,38 @@ class AuthRepository {
   Future<UserModel?> signInWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return null;
+      if (googleUser != null) {
+        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+        final AuthCredential credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
+        final UserCredential userCredential =
+            await _firebaseAuth.signInWithCredential(credential);
+        final user = userCredential.user;
+        if (user != null) {
+          final model = UserModel(
+            uid: user.uid,
+            email: user.email ?? googleUser.email,
+            displayName: (user.displayName != null && user.displayName!.isNotEmpty)
+                ? user.displayName!
+                : (googleUser.displayName ?? 'SafeCircle User'),
+            photoUrl: user.photoURL ?? googleUser.photoUrl,
+            phoneNumber: user.phoneNumber,
+            createdAt: DateTime.now(),
+          );
 
-      final UserCredential userCredential =
-          await _firebaseAuth.signInWithCredential(credential);
-      final user = userCredential.user;
-      if (user == null) return null;
-
-      final model = UserModel(
-        uid: user.uid,
-        email: user.email ?? googleUser.email,
-        displayName: (user.displayName != null && user.displayName!.isNotEmpty)
-            ? user.displayName!
-            : (googleUser.displayName ?? 'SafeCircle User'),
-        photoUrl: user.photoURL ?? googleUser.photoUrl,
-        phoneNumber: user.phoneNumber,
-        createdAt: DateTime.now(),
-      );
-
-      await NotificationService().subscribeToContactTopic(model.uid);
-      _customUser = model;
-      _authStateController.add(model);
-      return model;
+          _customUser = model;
+          _authStateController.add(model);
+          NotificationService().subscribeToContactTopic(model.uid).catchError((e) => null);
+          return model;
+        }
+      }
     } catch (e) {
-      debugPrint('Google Sign In fallback triggered: $e');
-      return await signInDemoUser();
+      debugPrint('Google Sign In error / fallback active: $e');
     }
+    return await signInDemoUser();
   }
 
   Future<UserModel> signInDemoUser() async {
@@ -134,13 +134,9 @@ class AuthRepository {
       createdAt: DateTime.now(),
     );
 
-    try {
-      await NotificationService().subscribeToContactTopic(uid);
-    } catch (e) {
-      debugPrint('NotificationService topic subscription note: $e');
-    }
     _customUser = demoUser;
     _authStateController.add(demoUser);
+    NotificationService().subscribeToContactTopic(uid).catchError((e) => null);
     return demoUser;
   }
 
