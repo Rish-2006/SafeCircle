@@ -1,6 +1,6 @@
 # SafeCircle — Disposable, Journey-Based Safety & Live Tracking
 
-> Silent, journey-based live location sharing with trusted contacts, shake-to-panic gesture, web tracking links, auto inactivity detection, and discreet fake incoming call exit system.
+> Silent, journey-based live location sharing with trusted contacts, shake-to-panic gesture, web tracking links, auto inactivity detection, client push notifications, and discreet fake incoming call exit system.
 
 ---
 
@@ -17,9 +17,12 @@ Traditional safety and location-sharing mobile applications suffer from two crit
 
 ---
 
-## Live Demo
+## Live Demo & Hosted Web Tracker
 
-**Public Web Live Tracking Link:**
+**🚀 Live Web Application:**
+[https://rish-2006.github.io/SafeCircle/](https://rish-2006.github.io/SafeCircle/)
+
+**📌 Demo Web Tracking Link:**
 [https://rish-2006.github.io/SafeCircle/#/track/demo-journey-id](https://rish-2006.github.io/SafeCircle/#/track/demo-journey-id)
 
 > *Trusted contacts can view a live journey without installing the app. Open the link above to test the interactive live web tracking preview directly in any browser! Includes live OpenStreetMap path polyline rendering, traveler pin updates, emergency SOS toggle, and safe arrival simulation.*
@@ -28,26 +31,30 @@ Traditional safety and location-sharing mobile applications suffer from two crit
 
 ## Key Differentiating Features
 
+- 🚀 **Onboarding & Profile Setup:** First-time onboarding carousel explaining core safety features and personal safety profile setup saved directly to Firestore.
 - 📱 **Shake-to-Panic Gesture:** Shaking the device firmly (tuned accelerometer threshold $\ge 27.0\text{ m/s}^2$ with a 1.5s debounce window to prevent accidental triggers while walking) instantly starts an emergency journey and alerts trusted contacts without unlocking the screen.
-- 🌐 **Web-Based Live Tracking Link:** Lightweight Flutter Web target deployed on GitHub Pages that displays real-time map updates for an active journey with OpenStreetMap rendering. Links automatically expire once the journey ends.
-- ⚡ **One-Tap Quick Ping:** A quick single-tap action from the home screen to send a one-time location snapshot without starting continuous background tracking.
+- 🌐 **Web-Based Live Tracking Link:** Lightweight Flutter Web target deployed automatically on GitHub Pages via CI/CD that displays real-time map updates for an active journey with OpenStreetMap rendering. Links automatically expire once the journey ends.
+- 🔔 **Client Push Notifications:** Native Firebase Cloud Messaging (FCM) integration subscribing users to `contact_{contactId}` topics for foreground alert banners during panic and inactivity triggers.
+- ⚡ **One-Tap Quick Ping:** Instant location snapshot written to Firestore `quickPings` subcollections and dispatched to trusted contact FCM topics.
+- 🛡️ **Firestore Security Rules:** Granular rule definitions (`firestore.rules`) providing public single-doc `get` access for web tracking links while blocking unauthorized list queries and protecting user profile data.
 - 🔋 **Battery-Critical Auto-Alert:** Automatic client-side listener that flags active journeys and dispatches emergency alerts if the phone battery drops below 15%.
 - 🏁 **Safe Arrival Confirmation:** Tapping "I'm Safe" ends the journey with a warm arrival animation and dispatches a final "arrived safely" alert to trusted contacts.
 - 📞 **Discreet Fake Incoming Call:** Native overlay UI with realistic incoming call screen, ringtone audio loop via `audioplayers`, and custom vibration pattern for a natural exit from uncomfortable situations.
+- 👥 **In-App Contact Tracking Screen:** Dedicated native Flutter screen (`/contact-track/:journeyId`) for trusted contacts with the app installed to monitor real-time map streams.
 
 ---
 
 ## Tech Stack
 
 - **Framework:** Flutter (Latest Stable), Dart 3
-- **State Management:** `flutter_riverpod` (v2.5+)
-- **Routing:** `go_router` (v14.0+) with Auth Guard & Web Route Parameters
+- **State Management:** `flutter_riverpod` (v2.6+)
+- **Routing:** `go_router` (v14.0+) with Auth & Profile Guard + Web Route Parameters
 - **Backend & Cloud Services:**
   - Firebase Authentication (Google Sign-In & Email/Demo Auth)
-  - Cloud Firestore (Real-time subcollections for location updates)
+  - Cloud Firestore (Real-time subcollections for location updates & security rules)
   - Firebase Cloud Functions (Scheduled Node.js 18 cron for inactivity detection)
-  - Firebase Hosting (Web tracking target deployment)
-  - Firebase Cloud Messaging (FCM push alerts)
+  - Firebase Cloud Messaging (FCM push alerts & topic subscriptions)
+  - GitHub Actions CI/CD (Automated web build & deployment to GitHub Pages)
 - **Location & Sensors:**
   - `geolocator` & `permission_handler`
   - `flutter_background_service` & `flutter_local_notifications` (Android Foreground Service with persistent notification)
@@ -77,7 +84,7 @@ SafeCircle follows strict Model-View-ViewModel (MVVM) architecture with full dec
                               ▼
                   ┌────────────────────────┐
                   │   Data Repositories    │
-                  │  (Firestore / Auth)    │
+                  │ (Firestore / Auth / User)
                   └───────────┬────────────┘
                               │ streams
                               ▼
@@ -86,9 +93,9 @@ SafeCircle follows strict Model-View-ViewModel (MVVM) architecture with full dec
                   └────────────────────────┘
 ```
 
-- **Core Layer (`lib/core/`):** Contains central theme tokens (`AppColors`, `AppTheme`), router configuration (`app_router.dart`), and device services (`LocationService`, `BackgroundTrackingService`, `SensorService`, `BatteryService`, `AudioVibrationService`).
-- **Data Layer (`lib/data/`):** Houses pure data classes (`UserModel`, `ContactModel`, `JourneyModel`, `LocationPoint`) with `toMap`/`fromMap` serialization, and repository classes (`AuthRepository`, `ContactRepository`, `JourneyRepository`) encapsulating all Firebase calls. UI components never access Firebase directly.
-- **Presentation Layer (`lib/presentation/`):** Contains feature screens and Riverpod state controllers (`auth_provider`, `contact_provider`, `journey_provider`, `fake_call_provider`).
+- **Core Layer (`lib/core/`):** Contains central theme tokens (`AppColors`, `AppTheme`), router configuration (`app_router.dart`), and device services (`LocationService`, `BackgroundTrackingService`, `SensorService`, `BatteryService`, `AudioVibrationService`, `NotificationService`).
+- **Data Layer (`lib/data/`):** Houses data models (`UserModel`, `ContactModel`, `JourneyModel`, `LocationPoint`) and repositories (`AuthRepository`, `UserRepository`, `ContactRepository`, `JourneyRepository`). UI components never access Firebase directly.
+- **Presentation Layer (`lib/presentation/`):** Feature screens (`SplashScreen`, `OnboardingScreen`, `ProfileSetupScreen`, `LoginScreen`, `JourneyScreen`, `TrustedContactsScreen`, `ContactLiveTrackingScreen`, `WebLiveTrackingScreen`, `HistoryScreen`) and Riverpod controllers.
 - **Shared Layer (`lib/shared/`):** Reusable UI components (`CustomButton`, `TrustedContactCard`, `JourneyStatusCard`, `BottomNavBar`, `PulseIndicator`).
 
 ---
@@ -109,6 +116,7 @@ lib/
 │       ├── background_service.dart
 │       ├── battery_service.dart
 │       ├── location_service.dart
+│       ├── notification_service.dart
 │       └── sensor_service.dart
 ├── data/
 │   ├── models/
@@ -119,14 +127,21 @@ lib/
 │   └── repositories/
 │       ├── auth_repository.dart
 │       ├── contact_repository.dart
-│       └── journey_repository.dart
+│       ├── journey_repository.dart
+│       └── user_repository.dart
 ├── presentation/
 │   ├── auth/
 │   │   ├── providers/auth_provider.dart
-│   │   └── screens/login_screen.dart
+│   │   └── screens/
+│   │       ├── login_screen.dart
+│   │       ├── onboarding_screen.dart
+│   │       ├── profile_setup_screen.dart
+│   │       └── splash_screen.dart
 │   ├── contacts/
 │   │   ├── providers/contact_provider.dart
-│   │   └── screens/trusted_contacts_screen.dart
+│   │   └── screens/
+│   │       ├── contact_live_tracking_screen.dart
+│   │       └── trusted_contacts_screen.dart
 │   ├── fake_call/
 │   │   └── screens/fake_call_screen.dart
 │   ├── journey/
@@ -179,29 +194,14 @@ lib/
      ```bash
      flutter run
      ```
-   - **Web (Public Live Tracking Target):**
+   - **Web Target:**
      ```bash
      flutter run -d chrome
      ```
 
 ---
 
-## Screenshots & Demo Flow
+## CI/CD Deployment
 
-| Journey Dashboard | Active Tracking & Map | Trusted Contacts | Fake Call Overlay |
-| :---: | :---: | :---: | :---: |
-| *(Placeholder: Active journey card, panic gesture status, quick ping)* | *(Placeholder: Real-time map, pulse indicator, live web link generator)* | *(Placeholder: Up to 5 contact cards, relation badges, quick add)* | *(Placeholder: Incoming call overlay, caller name, accept/decline)* |
+The repository includes a GitHub Actions pipeline (`.github/workflows/deploy-web.yml`) that automatically builds the Flutter Web application with `--base-href /SafeCircle/` and deploys to the `gh-pages` branch on every push to `main`.
 
----
-
-## Important Platform & Policy Engineering Notes
-
-### Foreground Service & Android Background Location Policy
-To guarantee reliable location updates when the user's screen is locked or the app is minimized, SafeCircle utilizes `flutter_background_service` configured as an **Android Foreground Service** with an explicit, persistent status bar notification ("SafeCircle Live Protection").
-
-- Silent background location tracking without a visible notification violates Android background execution limits and Google Play Store Developer Policies.
-- The persistent notification explicitly informs the user that location tracking is currently active and provides clear visual feedback.
-- When the user taps "I'm Safe" or ends the journey, the foreground service terminates immediately and dismisses the notification.
-
-### Data Safety & Privacy Disclosure
-SafeCircle collects precise location data exclusively during active, user-initiated journeys and shares it solely with user-designated trusted contacts. Location tracking is immediately halted upon journey completion.
