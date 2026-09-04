@@ -93,7 +93,7 @@ class HistoryScreen extends ConsumerWidget {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: journey.isPanicTriggered
-                              ? AppColors.danger.withOpacity(0.2)
+                              ? AppColors.danger.withValues(alpha: 0.2)
                               : AppColors.surfaceAlt,
                         ),
                         child: Icon(
@@ -135,9 +135,9 @@ class HistoryScreen extends ConsumerWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: AppColors.success.withOpacity(0.15),
+                              color: AppColors.success.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: AppColors.success.withOpacity(0.4)),
+                              border: Border.all(color: AppColors.success.withValues(alpha: 0.4)),
                             ),
                             child: const Text(
                               'Arrived Safe',

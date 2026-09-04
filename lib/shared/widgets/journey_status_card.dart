@@ -34,7 +34,7 @@ class JourneyStatusCard extends StatelessWidget {
         ),
       ),
       elevation: isActive ? 8 : 2,
-      shadowColor: isActive ? AppColors.primary.withOpacity(0.3) : Colors.black26,
+      shadowColor: isActive ? AppColors.primary.withValues(alpha: 0.3) : Colors.black26,
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(

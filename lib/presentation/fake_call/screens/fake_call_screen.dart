@@ -79,7 +79,7 @@ class _FakeCallOverlayState extends State<FakeCallOverlay> {
                 border: Border.all(color: AppColors.primary, width: 2),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.4),
+                    color: AppColors.primary.withValues(alpha: 0.4),
                     blurRadius: 20,
                     spreadRadius: 4,
                   ),

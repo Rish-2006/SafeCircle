@@ -22,17 +22,17 @@ Traditional safety and location-sharing mobile applications suffer from two crit
 **Public Web Live Tracking Link:**
 [https://rish-2006.github.io/SafeCircle/#/track/demo-journey-id](https://rish-2006.github.io/SafeCircle/#/track/demo-journey-id)
 
-> *Trusted contacts can view a live journey without installing the app. Open the link above to test the read-only live web tracking page shell directly in any browser.*
+> *Trusted contacts can view a live journey without installing the app. Open the link above to test the interactive live web tracking preview directly in any browser! Includes live OpenStreetMap path polyline rendering, traveler pin updates, emergency SOS toggle, and safe arrival simulation.*
 
 ---
 
 ## Key Differentiating Features
 
 - 📱 **Shake-to-Panic Gesture:** Shaking the device firmly (tuned accelerometer threshold $\ge 27.0\text{ m/s}^2$ with a 1.5s debounce window to prevent accidental triggers while walking) instantly starts an emergency journey and alerts trusted contacts without unlocking the screen.
-- 🌐 **Web-Based Live Tracking Link:** Lightweight Flutter Web target deployed on Firebase Hosting that displays real-time map updates for an active journey. Links automatically expire once the journey ends.
+- 🌐 **Web-Based Live Tracking Link:** Lightweight Flutter Web target deployed on GitHub Pages that displays real-time map updates for an active journey with OpenStreetMap rendering. Links automatically expire once the journey ends.
 - ⚡ **One-Tap Quick Ping:** A quick single-tap action from the home screen to send a one-time location snapshot without starting continuous background tracking.
-- 🔋 **Battery-Critical Auto-Alert:** Automatic client-side listener that flags active journeys and dispatches emergency push notifications if the phone battery drops below 15%.
-- 🏁 **Safe Arrival Confirmation:** Tapping "I'm Safe" ends the journey with a warm arrival animation and dispatches a final "arrived safely" push alert to trusted contacts.
+- 🔋 **Battery-Critical Auto-Alert:** Automatic client-side listener that flags active journeys and dispatches emergency alerts if the phone battery drops below 15%.
+- 🏁 **Safe Arrival Confirmation:** Tapping "I'm Safe" ends the journey with a warm arrival animation and dispatches a final "arrived safely" alert to trusted contacts.
 - 📞 **Discreet Fake Incoming Call:** Native overlay UI with realistic incoming call screen, ringtone audio loop via `audioplayers`, and custom vibration pattern for a natural exit from uncomfortable situations.
 
 ---

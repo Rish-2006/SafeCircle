@@ -240,7 +240,7 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
                 },
                 onShareLink: () {
                   if (activeJourney != null) {
-                    final link = 'https://safecircle-app.web.app/#/track/${activeJourney.id}';
+                    final link = 'https://rish-2006.github.io/SafeCircle/#/track/${activeJourney.id}';
                     Clipboard.setData(ClipboardData(text: link));
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(

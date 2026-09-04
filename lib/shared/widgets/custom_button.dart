@@ -102,7 +102,7 @@ class CustomButton extends StatelessWidget {
           backgroundColor: bg,
           foregroundColor: fg,
           elevation: variant == ButtonVariant.coral || variant == ButtonVariant.danger ? 4 : 2,
-          shadowColor: bg.withOpacity(0.4),
+          shadowColor: bg.withValues(alpha: 0.4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
             side: border ?? BorderSide.none,

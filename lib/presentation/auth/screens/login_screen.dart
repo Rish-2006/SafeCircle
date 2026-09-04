@@ -33,7 +33,7 @@ class LoginScreen extends ConsumerWidget {
                     border: Border.all(color: AppColors.primary, width: 2),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primary.withOpacity(0.35),
+                        color: AppColors.primary.withValues(alpha: 0.35),
                         blurRadius: 24,
                         spreadRadius: 4,
                       ),

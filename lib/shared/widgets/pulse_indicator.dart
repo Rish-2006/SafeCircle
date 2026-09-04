@@ -54,7 +54,7 @@ class _PulseIndicatorState extends State<PulseIndicator>
               color: widget.color,
               boxShadow: [
                 BoxShadow(
-                  color: widget.color.withOpacity(0.6),
+                  color: widget.color.withValues(alpha: 0.6),
                   blurRadius: 8,
                   spreadRadius: 2,
                 ),

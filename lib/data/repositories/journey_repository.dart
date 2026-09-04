@@ -31,6 +31,24 @@ class JourneyRepository {
   }
 
   Stream<JourneyModel?> watchJourneyById(String journeyId) {
+    if (journeyId.toLowerCase().contains('demo')) {
+      return Stream.value(JourneyModel(
+        id: journeyId,
+        userId: 'demo_user_123',
+        isActive: true,
+        startTime: DateTime.now().subtract(const Duration(minutes: 15)),
+        destinationName: 'Market St & Ferry Building, San Francisco',
+        contactIds: ['contact-1', 'contact-2'],
+        isPanicTriggered: false,
+        expiresAt: DateTime.now().add(const Duration(hours: 12)),
+        lastKnownLocation: LocationPoint(
+          latitude: 37.7925,
+          longitude: -122.3930,
+          speed: 4.2,
+          timestamp: DateTime.now(),
+        ),
+      ));
+    }
     try {
       return _firestore
           .collection('journeys')
@@ -50,6 +68,35 @@ class JourneyRepository {
   }
 
   Stream<List<LocationPoint>> watchJourneyLocations(String journeyId) {
+    if (journeyId.toLowerCase().contains('demo')) {
+      final now = DateTime.now();
+      return Stream.value([
+        LocationPoint(
+          latitude: 37.7925,
+          longitude: -122.3930,
+          speed: 4.2,
+          timestamp: now,
+        ),
+        LocationPoint(
+          latitude: 37.7897,
+          longitude: -122.4012,
+          speed: 4.5,
+          timestamp: now.subtract(const Duration(minutes: 3)),
+        ),
+        LocationPoint(
+          latitude: 37.7865,
+          longitude: -122.4055,
+          speed: 4.8,
+          timestamp: now.subtract(const Duration(minutes: 7)),
+        ),
+        LocationPoint(
+          latitude: 37.7812,
+          longitude: -122.4110,
+          speed: 5.1,
+          timestamp: now.subtract(const Duration(minutes: 12)),
+        ),
+      ]);
+    }
     try {
       return _firestore
           .collection('journeys')

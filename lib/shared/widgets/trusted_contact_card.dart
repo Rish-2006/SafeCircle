@@ -57,9 +57,9 @@ class TrustedContactCard extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppColors.primaryDark.withOpacity(0.4),
+                            color: AppColors.primaryDark.withValues(alpha: 0.4),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.primary.withOpacity(0.5)),
+                            border: Border.all(color: AppColors.primary.withValues(alpha: 0.5)),
                           ),
                           child: Text(
                             contact.relationship!,
