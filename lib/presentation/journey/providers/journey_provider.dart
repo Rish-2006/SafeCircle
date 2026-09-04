@@ -69,6 +69,23 @@ class JourneyController extends StateNotifier<AsyncValue<JourneyModel?>> {
       state = AsyncValue.error(e, st);
     }
   }
+
+  Future<void> sendQuickPing() async {
+    final user = _ref.read(authStateProvider).value;
+    final userId = user?.uid ?? 'demo_user_123';
+
+    final contacts = await _ref.read(contactRepositoryProvider).getContacts(userId);
+    final contactIds = contacts.map((c) => c.id).toList();
+
+    await LocationService.requestLocationPermissions();
+    final loc = await LocationService.getCurrentLocation();
+
+    await _repository.sendQuickPing(
+      userId: userId,
+      location: loc,
+      contactIds: contactIds,
+    );
+  }
 }
 
 final journeyControllerProvider =
@@ -76,3 +93,4 @@ final journeyControllerProvider =
   final repository = ref.watch(journeyRepositoryProvider);
   return JourneyController(repository, ref);
 });
+

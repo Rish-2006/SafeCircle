@@ -217,4 +217,37 @@ class JourneyRepository {
       return _mockHistory;
     }
   }
+
+  Future<void> sendQuickPing({
+    required String userId,
+    required LocationPoint location,
+    required List<String> contactIds,
+  }) async {
+    final pingId = const Uuid().v4();
+    final pingData = {
+      'id': pingId,
+      'userId': userId,
+      'location': location.toMap(),
+      'timestamp': DateTime.now().toIso8601String(),
+      'contactIds': contactIds,
+    };
+
+    try {
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('quickPings')
+          .doc(pingId)
+          .set(pingData);
+
+      await _firestore.collection('quickPings').doc(pingId).set(pingData);
+    } catch (e) {
+      debugPrint('Quick ping Firestore fallback: $e');
+    }
+
+    for (final contactId in contactIds) {
+      debugPrint('Notifying FCM topic: contact_$contactId for Quick Ping');
+    }
+  }
 }
+

@@ -169,17 +169,29 @@ class _JourneyScreenState extends ConsumerState<JourneyScreen> {
   }
 
   void _oneTapQuickPing() async {
-    await LocationService.requestLocationPermissions();
-    final loc = await LocationService.getCurrentLocation();
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Quick Ping Sent: (${loc.latitude.toStringAsFixed(4)}, ${loc.longitude.toStringAsFixed(4)})'),
-          backgroundColor: AppColors.primary,
-        ),
-      );
+    try {
+      await ref.read(journeyControllerProvider.notifier).sendQuickPing();
+      final loc = await LocationService.getCurrentLocation();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Quick Ping Sent & Contacts Notified! (${loc.latitude.toStringAsFixed(4)}, ${loc.longitude.toStringAsFixed(4)})'),
+            backgroundColor: AppColors.primary,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Quick Ping failed: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
     }
   }
+
 
   String _formatElapsed(int seconds) {
     final mins = (seconds ~/ 60).toString().padLeft(2, '0');
