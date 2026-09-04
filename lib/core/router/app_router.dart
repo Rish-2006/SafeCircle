@@ -9,6 +9,7 @@ import '../../presentation/auth/screens/profile_setup_screen.dart';
 import '../../presentation/journey/screens/journey_screen.dart';
 import '../../presentation/contacts/screens/trusted_contacts_screen.dart';
 import '../../presentation/journey/screens/history_screen.dart';
+import '../../presentation/contacts/screens/contact_live_tracking_screen.dart';
 import '../../presentation/web/screens/web_live_tracking_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -19,6 +20,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (BuildContext context, GoRouterState state) {
       final loc = state.matchedLocation;
       final isWebTracking = loc.startsWith('/track/');
+      final isContactTracking = loc.startsWith('/contact-track/');
       final isSplash = loc == '/splash';
       final isOnboarding = loc == '/onboarding';
       final isLoggingIn = loc == '/login';
@@ -34,7 +36,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isAuthenticated = user != null;
 
       if (!isAuthenticated) {
-        if (!isLoggingIn) return '/login';
+        if (!isLoggingIn && !isContactTracking) return '/login';
         return null;
       }
 
@@ -88,7 +90,15 @@ final routerProvider = Provider<GoRouter>((ref) {
           return WebLiveTrackingScreen(journeyId: journeyId);
         },
       ),
+      GoRoute(
+        path: '/contact-track/:journeyId',
+        builder: (context, state) {
+          final journeyId = state.pathParameters['journeyId'] ?? '';
+          return ContactLiveTrackingScreen(journeyId: journeyId);
+        },
+      ),
     ],
   );
 });
+
 
