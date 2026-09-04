@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users and their subcollections (contacts, quickPings)
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      match /{allSubcollections=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // Journeys collection
+    match /journeys/{journeyId} {
+      // Allow public GET (single doc) for web tracking page
+      allow get: if true;
+
+      // Allow owner full query/list, create, update, delete
+      allow list: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+
+      // Locations subcollection under journey
+      match /locations/{locationId} {
+        allow get, list: if true; // Public read of locations for web tracking map
+        allow create, update, delete: if request.auth != null;
+      }
+    }
+
+    // Top-level quickPings collection
+    match /quickPings/{pingId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Default deny all other paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
