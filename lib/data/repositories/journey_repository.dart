@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
@@ -6,27 +7,34 @@ import '../models/location_point.dart';
 
 class JourneyRepository {
   final FirebaseFirestore _firestore;
+  final StreamController<JourneyModel?> _activeJourneyController =
+      StreamController<JourneyModel?>.broadcast();
   JourneyModel? _activeMockJourney;
   final List<JourneyModel> _mockHistory = [];
 
   JourneyRepository({FirebaseFirestore? firestore})
       : _firestore = firestore ?? FirebaseFirestore.instance;
 
-  Stream<JourneyModel?> watchActiveJourney(String userId) {
+  Stream<JourneyModel?> watchActiveJourney(String userId) async* {
+    yield _activeMockJourney;
     try {
-      return _firestore
+      final firestoreStream = _firestore
           .collection('journeys')
           .where('userId', isEqualTo: userId)
           .where('isActive', isEqualTo: true)
           .limit(1)
           .snapshots()
           .map((snapshot) {
-        if (snapshot.docs.isEmpty) return null;
+        if (snapshot.docs.isEmpty) return _activeMockJourney;
         return JourneyModel.fromMap(snapshot.docs.first.data(), snapshot.docs.first.id);
       });
+
+      await for (final item in firestoreStream) {
+        yield item ?? _activeMockJourney;
+      }
     } catch (e) {
       debugPrint('Watch active journey stream fallback: $e');
-      return Stream.value(_activeMockJourney);
+      yield* _activeJourneyController.stream;
     }
   }
 
@@ -55,7 +63,10 @@ class JourneyRepository {
           .doc(journeyId)
           .snapshots()
           .map((doc) {
-        if (!doc.exists || doc.data() == null) return null;
+        if (!doc.exists || doc.data() == null) {
+          if (_activeMockJourney?.id == journeyId) return _activeMockJourney;
+          return null;
+        }
         return JourneyModel.fromMap(doc.data()!, doc.id);
       });
     } catch (e) {
@@ -139,8 +150,9 @@ class JourneyRepository {
       await _firestore.collection('journeys').doc(journeyId).set(journey.toMap());
     } catch (e) {
       debugPrint('Start journey fallback: $e');
-      _activeMockJourney = journey;
     }
+    _activeMockJourney = journey;
+    _activeJourneyController.add(journey);
     return journey;
   }
 
@@ -160,11 +172,12 @@ class JourneyRepository {
       });
     } catch (e) {
       debugPrint('Update location fallback: $e');
-      if (_activeMockJourney?.id == journeyId) {
-        _activeMockJourney = _activeMockJourney!.copyWith(
-          lastKnownLocation: location,
-        );
-      }
+    }
+    if (_activeMockJourney?.id == journeyId) {
+      _activeMockJourney = _activeMockJourney!.copyWith(
+        lastKnownLocation: location,
+      );
+      _activeJourneyController.add(_activeMockJourney);
     }
   }
 
@@ -177,15 +190,16 @@ class JourneyRepository {
       });
     } catch (e) {
       debugPrint('End journey fallback: $e');
-      if (_activeMockJourney?.id == journeyId) {
-        final ended = _activeMockJourney!.copyWith(
-          isActive: false,
-          endTime: now,
-        );
-        _mockHistory.add(ended);
-        _activeMockJourney = null;
-      }
     }
+    if (_activeMockJourney?.id == journeyId) {
+      final ended = _activeMockJourney!.copyWith(
+        isActive: false,
+        endTime: now,
+      );
+      _mockHistory.add(ended);
+      _activeMockJourney = null;
+    }
+    _activeJourneyController.add(null);
   }
 
   Future<void> setBatteryAlerted(String journeyId) async {
@@ -195,9 +209,10 @@ class JourneyRepository {
       });
     } catch (e) {
       debugPrint('Set battery alert fallback: $e');
-      if (_activeMockJourney?.id == journeyId) {
-        _activeMockJourney = _activeMockJourney!.copyWith(isBatteryAlerted: true);
-      }
+    }
+    if (_activeMockJourney?.id == journeyId) {
+      _activeMockJourney = _activeMockJourney!.copyWith(isBatteryAlerted: true);
+      _activeJourneyController.add(_activeMockJourney);
     }
   }
 
@@ -209,9 +224,10 @@ class JourneyRepository {
           .where('isActive', isEqualTo: false)
           .get();
 
-      return snapshot.docs
+      final list = snapshot.docs
           .map((doc) => JourneyModel.fromMap(doc.data(), doc.id))
           .toList();
+      return list.isNotEmpty ? list : _mockHistory;
     } catch (e) {
       debugPrint('Get history fallback: $e');
       return _mockHistory;
@@ -250,4 +266,5 @@ class JourneyRepository {
     }
   }
 }
+
 

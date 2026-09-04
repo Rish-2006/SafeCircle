@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/widgets/custom_button.dart';
@@ -10,6 +11,17 @@ class LoginScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(authStateProvider, (previous, next) {
+      final user = next.value;
+      if (user != null) {
+        if (user.isProfileComplete) {
+          context.go('/');
+        } else {
+          context.go('/profile-setup');
+        }
+      }
+    });
+
     final authController = ref.watch(authControllerProvider);
 
     return Scaffold(

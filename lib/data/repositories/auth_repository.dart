@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
@@ -7,43 +8,75 @@ import '../../core/services/notification_service.dart';
 class AuthRepository {
   final FirebaseAuth _firebaseAuth;
   final GoogleSignIn _googleSignIn;
+  final StreamController<UserModel?> _authStateController =
+      StreamController<UserModel?>.broadcast();
+  UserModel? _customUser;
 
   AuthRepository({
     FirebaseAuth? firebaseAuth,
     GoogleSignIn? googleSignIn,
   })  : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance,
-        _googleSignIn = googleSignIn ?? GoogleSignIn();
+        _googleSignIn = googleSignIn ?? GoogleSignIn() {
+    _init();
+  }
 
-  Stream<UserModel?> get authStateChanges {
+  void _init() {
     try {
-      return _firebaseAuth.authStateChanges().map((User? user) {
-        if (user == null) return null;
+      _firebaseAuth.authStateChanges().listen((User? user) {
+        if (user != null) {
+          final model = UserModel(
+            uid: user.uid,
+            email: user.email ?? 'user@safecircle.app',
+            displayName: (user.displayName != null && user.displayName!.isNotEmpty)
+                ? user.displayName!
+                : 'SafeCircle User',
+            photoUrl: user.photoURL,
+            phoneNumber: user.phoneNumber,
+            createdAt: DateTime.now(),
+          );
+          _customUser = model;
+          _authStateController.add(model);
+        } else if (_customUser != null && _customUser!.uid.startsWith('demo_')) {
+          _authStateController.add(_customUser);
+        } else {
+          _customUser = null;
+          _authStateController.add(null);
+        }
+      }, onError: (e) {
+        debugPrint('Auth listener error: $e');
+        if (_customUser != null) {
+          _authStateController.add(_customUser);
+        }
+      });
+    } catch (e) {
+      debugPrint('Firebase Auth init error: $e');
+    }
+  }
+
+  Stream<UserModel?> get authStateChanges async* {
+    yield currentUser;
+    yield* _authStateController.stream;
+  }
+
+  UserModel? get currentUser {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user != null) {
         return UserModel(
           uid: user.uid,
           email: user.email ?? 'user@safecircle.app',
-          displayName: user.displayName ?? 'SafeCircle User',
+          displayName: (user.displayName != null && user.displayName!.isNotEmpty)
+              ? user.displayName!
+              : 'SafeCircle User',
           photoUrl: user.photoURL,
           phoneNumber: user.phoneNumber,
           createdAt: DateTime.now(),
         );
-      });
+      }
     } catch (e) {
-      debugPrint('Auth stream fallback active: $e');
-      return Stream.value(null);
+      debugPrint('Error getting currentUser from FirebaseAuth: $e');
     }
-  }
-
-  UserModel? get currentUser {
-    final user = _firebaseAuth.currentUser;
-    if (user == null) return null;
-    return UserModel(
-      uid: user.uid,
-      email: user.email ?? 'user@safecircle.app',
-      displayName: user.displayName ?? 'SafeCircle User',
-      photoUrl: user.photoURL,
-      phoneNumber: user.phoneNumber,
-      createdAt: DateTime.now(),
-    );
+    return _customUser;
   }
 
   Future<UserModel?> signInWithGoogle() async {
@@ -65,38 +98,51 @@ class AuthRepository {
       final model = UserModel(
         uid: user.uid,
         email: user.email ?? googleUser.email,
-        displayName: user.displayName ?? googleUser.displayName ?? 'SafeCircle User',
+        displayName: (user.displayName != null && user.displayName!.isNotEmpty)
+            ? user.displayName!
+            : (googleUser.displayName ?? 'SafeCircle User'),
         photoUrl: user.photoURL ?? googleUser.photoUrl,
+        phoneNumber: user.phoneNumber,
         createdAt: DateTime.now(),
       );
 
       await NotificationService().subscribeToContactTopic(model.uid);
+      _customUser = model;
+      _authStateController.add(model);
       return model;
     } catch (e) {
       debugPrint('Google Sign In fallback triggered: $e');
-      // Graceful fallback for testing when Google OAuth is not configured
-      const demoUid = 'demo_user_123';
-      await NotificationService().subscribeToContactTopic(demoUid);
-      return UserModel(
-        uid: demoUid,
-        email: 'demo@safecircle.app',
-        displayName: 'SafeCircle Demo User',
-        createdAt: DateTime.now(),
-      );
+      return await signInDemoUser();
     }
   }
 
   Future<UserModel> signInDemoUser() async {
-    const demoUid = 'demo_user_123';
-    await NotificationService().subscribeToContactTopic(demoUid);
-    return UserModel(
-      uid: demoUid,
-      email: 'demo@safecircle.app',
+    User? firebaseUser;
+    try {
+      final userCredential = await _firebaseAuth.signInAnonymously();
+      firebaseUser = userCredential.user;
+    } catch (e) {
+      debugPrint('Firebase anonymous sign in fallback: $e');
+    }
+
+    final uid = firebaseUser?.uid ?? 'demo_user_123';
+    final demoUser = UserModel(
+      uid: uid,
+      email: firebaseUser?.email ?? 'demo@safecircle.app',
       displayName: 'SafeCircle Demo User',
+      phoneNumber: '+1 555-0199',
       createdAt: DateTime.now(),
     );
-  }
 
+    try {
+      await NotificationService().subscribeToContactTopic(uid);
+    } catch (e) {
+      debugPrint('NotificationService topic subscription note: $e');
+    }
+    _customUser = demoUser;
+    _authStateController.add(demoUser);
+    return demoUser;
+  }
 
   Future<void> signOut() async {
     try {
@@ -105,5 +151,13 @@ class AuthRepository {
     } catch (e) {
       debugPrint('Sign out exception: $e');
     }
+    _customUser = null;
+    _authStateController.add(null);
+  }
+
+  void updateCurrentUser(UserModel user) {
+    _customUser = user;
+    _authStateController.add(user);
   }
 }
+

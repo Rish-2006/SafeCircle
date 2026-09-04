@@ -38,8 +38,7 @@ class UserRepository {
           .doc(user.uid)
           .set(user.toMap(), SetOptions(merge: true));
     } catch (e) {
-      debugPrint('Error updating user profile: $e');
-      rethrow;
+      debugPrint('Error updating user profile (fallback active): $e');
     }
   }
 }

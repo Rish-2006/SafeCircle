@@ -74,6 +74,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
 
       final userRepository = ref.read(userRepositoryProvider);
       await userRepository.updateUserProfile(updatedUser);
+      ref.read(authRepositoryProvider).updateCurrentUser(updatedUser);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
