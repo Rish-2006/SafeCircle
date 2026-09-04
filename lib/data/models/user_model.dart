@@ -4,6 +4,7 @@ class UserModel {
   final String displayName;
   final String? photoUrl;
   final String? phoneNumber;
+  final String? emergencyNote;
   final DateTime createdAt;
 
   const UserModel({
@@ -12,8 +13,15 @@ class UserModel {
     required this.displayName,
     this.photoUrl,
     this.phoneNumber,
+    this.emergencyNote,
     required this.createdAt,
   });
+
+  bool get isProfileComplete =>
+      displayName.isNotEmpty &&
+      displayName != 'SafeCircle User' &&
+      phoneNumber != null &&
+      phoneNumber!.isNotEmpty;
 
   Map<String, dynamic> toMap() {
     return {
@@ -22,6 +30,7 @@ class UserModel {
       'displayName': displayName,
       'photoUrl': photoUrl,
       'phoneNumber': phoneNumber,
+      'emergencyNote': emergencyNote,
       'createdAt': createdAt.toIso8601String(),
     };
   }
@@ -30,9 +39,10 @@ class UserModel {
     return UserModel(
       uid: id,
       email: map['email'] as String? ?? '',
-      displayName: map['displayName'] as String? ?? 'SafeCircle User',
+      displayName: map['displayName'] as String? ?? '',
       photoUrl: map['photoUrl'] as String?,
       phoneNumber: map['phoneNumber'] as String?,
+      emergencyNote: map['emergencyNote'] as String?,
       createdAt: map['createdAt'] != null
           ? DateTime.tryParse(map['createdAt'] as String) ?? DateTime.now()
           : DateTime.now(),
@@ -45,6 +55,7 @@ class UserModel {
     String? displayName,
     String? photoUrl,
     String? phoneNumber,
+    String? emergencyNote,
     DateTime? createdAt,
   }) {
     return UserModel(
@@ -53,7 +64,9 @@ class UserModel {
       displayName: displayName ?? this.displayName,
       photoUrl: photoUrl ?? this.photoUrl,
       phoneNumber: phoneNumber ?? this.phoneNumber,
+      emergencyNote: emergencyNote ?? this.emergencyNote,
       createdAt: createdAt ?? this.createdAt,
     );
   }
 }
+

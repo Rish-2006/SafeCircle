@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../presentation/auth/providers/auth_provider.dart';
+import '../../presentation/auth/screens/splash_screen.dart';
+import '../../presentation/auth/screens/onboarding_screen.dart';
 import '../../presentation/auth/screens/login_screen.dart';
+import '../../presentation/auth/screens/profile_setup_screen.dart';
 import '../../presentation/journey/screens/journey_screen.dart';
 import '../../presentation/contacts/screens/trusted_contacts_screen.dart';
 import '../../presentation/journey/screens/history_screen.dart';
@@ -12,23 +15,38 @@ final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
 
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: '/splash',
     redirect: (BuildContext context, GoRouterState state) {
-      final isLoggingIn = state.matchedLocation == '/login';
-      final isWebTracking = state.matchedLocation.startsWith('/track/');
+      final loc = state.matchedLocation;
+      final isWebTracking = loc.startsWith('/track/');
+      final isSplash = loc == '/splash';
+      final isOnboarding = loc == '/onboarding';
+      final isLoggingIn = loc == '/login';
+      final isProfileSetup = loc == '/profile-setup';
 
-      // Allow public web live tracking links without authentication
-      if (isWebTracking) {
+      // Public web tracking screen requires no auth
+      if (isWebTracking) return null;
+
+      // Allow splash & onboarding without forcing redirect
+      if (isSplash || isOnboarding) return null;
+
+      final user = authState.value;
+      final isAuthenticated = user != null;
+
+      if (!isAuthenticated) {
+        if (!isLoggingIn) return '/login';
         return null;
       }
 
-      final isAuthenticated = authState.value != null;
-
-      if (!isAuthenticated && !isLoggingIn) {
-        return '/login';
+      // User is authenticated
+      final profileIncomplete = !user.isProfileComplete;
+      if (profileIncomplete) {
+        if (!isProfileSetup) return '/profile-setup';
+        return null;
       }
 
-      if (isAuthenticated && isLoggingIn) {
+      // User is authenticated and profile is complete
+      if (isLoggingIn || isProfileSetup) {
         return '/';
       }
 
@@ -36,8 +54,20 @@ final routerProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => const OnboardingScreen(),
+      ),
+      GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/profile-setup',
+        builder: (context, state) => const ProfileSetupScreen(),
       ),
       GoRoute(
         path: '/',
@@ -61,3 +91,4 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
