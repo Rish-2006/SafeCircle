@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
+import '../../core/services/notification_service.dart';
 
 class AuthRepository {
   final FirebaseAuth _firebaseAuth;
@@ -61,18 +62,23 @@ class AuthRepository {
       final user = userCredential.user;
       if (user == null) return null;
 
-      return UserModel(
+      final model = UserModel(
         uid: user.uid,
         email: user.email ?? googleUser.email,
         displayName: user.displayName ?? googleUser.displayName ?? 'SafeCircle User',
         photoUrl: user.photoURL ?? googleUser.photoUrl,
         createdAt: DateTime.now(),
       );
+
+      await NotificationService().subscribeToContactTopic(model.uid);
+      return model;
     } catch (e) {
       debugPrint('Google Sign In fallback triggered: $e');
       // Graceful fallback for testing when Google OAuth is not configured
+      const demoUid = 'demo_user_123';
+      await NotificationService().subscribeToContactTopic(demoUid);
       return UserModel(
-        uid: 'demo_user_123',
+        uid: demoUid,
         email: 'demo@safecircle.app',
         displayName: 'SafeCircle Demo User',
         createdAt: DateTime.now(),
@@ -81,13 +87,16 @@ class AuthRepository {
   }
 
   Future<UserModel> signInDemoUser() async {
+    const demoUid = 'demo_user_123';
+    await NotificationService().subscribeToContactTopic(demoUid);
     return UserModel(
-      uid: 'demo_user_123',
+      uid: demoUid,
       email: 'demo@safecircle.app',
       displayName: 'SafeCircle Demo User',
       createdAt: DateTime.now(),
     );
   }
+
 
   Future<void> signOut() async {
     try {

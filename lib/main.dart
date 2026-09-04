@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'core/constants/app_theme.dart';
 import 'core/constants/app_strings.dart';
 import 'core/router/app_router.dart';
+import 'core/services/notification_service.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -13,6 +14,7 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    await NotificationService().initialize();
   } catch (e) {
     debugPrint('Firebase initialization note: $e');
   }
@@ -36,6 +38,8 @@ class SafeCircleApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       routerConfig: router,
+      scaffoldMessengerKey: NotificationService().scaffoldMessengerKey,
     );
   }
 }
+
