@@ -24,7 +24,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isSplash = loc == '/splash';
       final isOnboarding = loc == '/onboarding';
       final isLoggingIn = loc == '/login';
-      final isProfileSetup = loc == '/profile-setup';
 
       // Public web tracking screen requires no auth
       if (isWebTracking) return null;
@@ -32,7 +31,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Allow splash & onboarding without forcing redirect
       if (isSplash || isOnboarding) return null;
 
-      final user = authState.value;
+      final user = authState.value ?? ref.watch(authRepositoryProvider).currentUser;
       final isAuthenticated = user != null;
 
       if (!isAuthenticated) {
@@ -40,15 +39,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         return null;
       }
 
-      // User is authenticated
-      final profileIncomplete = !user.isProfileComplete;
-      if (profileIncomplete) {
-        if (!isProfileSetup) return '/profile-setup';
-        return null;
-      }
-
-      // User is authenticated and profile is complete
-      if (isLoggingIn || isProfileSetup) {
+      // User is authenticated -> redirect away from login page to home
+      if (isLoggingIn) {
         return '/';
       }
 

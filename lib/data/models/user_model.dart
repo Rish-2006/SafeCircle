@@ -17,11 +17,7 @@ class UserModel {
     required this.createdAt,
   });
 
-  bool get isProfileComplete =>
-      displayName.isNotEmpty &&
-      displayName != 'SafeCircle User' &&
-      phoneNumber != null &&
-      phoneNumber!.isNotEmpty;
+  bool get isProfileComplete => displayName.isNotEmpty;
 
   Map<String, dynamic> toMap() {
     return {
