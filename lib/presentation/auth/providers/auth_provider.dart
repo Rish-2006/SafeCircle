@@ -16,19 +16,44 @@ class AuthController extends StateNotifier<AsyncValue<UserModel?>> {
 
   AuthController(this._repository) : super(const AsyncValue.data(null));
 
-  Future<void> signInWithGoogle() async {
+  Future<UserModel?> signInWithGoogle() async {
     state = const AsyncValue.loading();
+    UserModel? user;
     state = await AsyncValue.guard(() async {
-      final user = await _repository.signInWithGoogle();
+      user = await _repository.signInWithGoogle();
       return user;
     });
+    return user;
   }
 
-  Future<void> signInDemo() async {
+  Future<UserModel?> signInWithEmail(String email, String password) async {
     state = const AsyncValue.loading();
+    UserModel? user;
     state = await AsyncValue.guard(() async {
-      return await _repository.signInDemoUser();
+      user = await _repository.signInWithEmail(email, password);
+      return user;
     });
+    return user;
+  }
+
+  Future<UserModel?> signUpWithEmail(String email, String password, String displayName) async {
+    state = const AsyncValue.loading();
+    UserModel? user;
+    state = await AsyncValue.guard(() async {
+      user = await _repository.signUpWithEmail(email, password, displayName);
+      return user;
+    });
+    return user;
+  }
+
+  Future<UserModel?> signInDemo() async {
+    state = const AsyncValue.loading();
+    UserModel? user;
+    state = await AsyncValue.guard(() async {
+      user = await _repository.signInDemoUser();
+      return user;
+    });
+    return user;
   }
 
   Future<void> signOut() async {

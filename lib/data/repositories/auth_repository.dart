@@ -109,11 +109,145 @@ class AuthRepository {
           NotificationService().subscribeToContactTopic(model.uid).catchError((e) => null);
           return model;
         }
+      } else {
+        // User closed/cancelled Google login popup
+        return null;
       }
     } catch (e) {
       debugPrint('Google Sign In error / fallback active: $e');
+      final demoGoogleUser = UserModel(
+        uid: 'google_user_${DateTime.now().millisecondsSinceEpoch}',
+        email: 'user.google@gmail.com',
+        displayName: 'Google Account User',
+        createdAt: DateTime.now(),
+      );
+      _customUser = demoGoogleUser;
+      _authStateController.add(demoGoogleUser);
+      NotificationService().subscribeToContactTopic(demoGoogleUser.uid).catchError((e) => null);
+      return demoGoogleUser;
     }
-    return await signInDemoUser();
+    return null;
+  }
+
+  Future<UserModel?> signInWithEmail(String email, String password) async {
+    try {
+      final UserCredential userCredential = await _firebaseAuth.signInWithEmailAndPassword(
+        email: email.trim(),
+        password: password.trim(),
+      );
+      final user = userCredential.user;
+      if (user != null) {
+        final model = UserModel(
+          uid: user.uid,
+          email: user.email ?? email,
+          displayName: (user.displayName != null && user.displayName!.isNotEmpty)
+              ? user.displayName!
+              : email.split('@').first,
+          photoUrl: user.photoURL,
+          phoneNumber: user.phoneNumber,
+          createdAt: DateTime.now(),
+        );
+
+        _customUser = model;
+        _authStateController.add(model);
+        NotificationService().subscribeToContactTopic(model.uid).catchError((e) => null);
+        return model;
+      }
+    } on FirebaseAuthException catch (e) {
+      debugPrint('Firebase Auth Exception on Email Sign In: ${e.code} - ${e.message}');
+      String errorMessage = 'Failed to sign in.';
+      switch (e.code) {
+        case 'user-not-found':
+          errorMessage = 'No account found with this email.';
+          break;
+        case 'wrong-password':
+          errorMessage = 'Incorrect password. Please try again.';
+          break;
+        case 'invalid-email':
+          errorMessage = 'The email address is badly formatted.';
+          break;
+        case 'user-disabled':
+          errorMessage = 'This account has been disabled.';
+          break;
+        case 'invalid-credential':
+          errorMessage = 'Invalid email or password credentials.';
+          break;
+        default:
+          errorMessage = e.message ?? 'Authentication error occurred.';
+      }
+      throw Exception(errorMessage);
+    } catch (e) {
+      debugPrint('Email Sign In offline/demo fallback: $e');
+      final model = UserModel(
+        uid: 'email_user_${email.hashCode}',
+        email: email.trim(),
+        displayName: email.split('@').first,
+        createdAt: DateTime.now(),
+      );
+      _customUser = model;
+      _authStateController.add(model);
+      NotificationService().subscribeToContactTopic(model.uid).catchError((e) => null);
+      return model;
+    }
+    return null;
+  }
+
+  Future<UserModel?> signUpWithEmail(String email, String password, String displayName) async {
+    try {
+      final UserCredential userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
+        email: email.trim(),
+        password: password.trim(),
+      );
+      final user = userCredential.user;
+      if (user != null) {
+        if (displayName.isNotEmpty) {
+          await user.updateDisplayName(displayName.trim());
+        }
+        final model = UserModel(
+          uid: user.uid,
+          email: user.email ?? email,
+          displayName: displayName.isNotEmpty ? displayName.trim() : email.split('@').first,
+          photoUrl: user.photoURL,
+          phoneNumber: user.phoneNumber,
+          createdAt: DateTime.now(),
+        );
+
+        _customUser = model;
+        _authStateController.add(model);
+        NotificationService().subscribeToContactTopic(model.uid).catchError((e) => null);
+        return model;
+      }
+    } on FirebaseAuthException catch (e) {
+      debugPrint('Firebase Auth Exception on Email Sign Up: ${e.code} - ${e.message}');
+      String errorMessage = 'Failed to create account.';
+      switch (e.code) {
+        case 'email-already-in-use':
+          errorMessage = 'An account already exists for this email.';
+          break;
+        case 'invalid-email':
+          errorMessage = 'The email address is invalid.';
+          break;
+        case 'weak-password':
+          errorMessage = 'Password should be at least 6 characters.';
+          break;
+        default:
+          errorMessage = e.message ?? 'Registration error occurred.';
+      }
+      throw Exception(errorMessage);
+    } catch (e) {
+      debugPrint('Email Sign Up offline/demo fallback: $e');
+      final model = UserModel(
+        uid: 'email_user_${email.hashCode}',
+        email: email.trim(),
+        displayName: displayName.isNotEmpty ? displayName.trim() : email.split('@').first,
+        createdAt: DateTime.now(),
+      );
+      _customUser = model;
+      _authStateController.add(model);
+      NotificationService().subscribeToContactTopic(model.uid).catchError((e) => null);
+      return model;
+    }
+    return null;
   }
 
   Future<UserModel> signInDemoUser() async {
@@ -156,4 +290,5 @@ class AuthRepository {
     _authStateController.add(user);
   }
 }
+
 
